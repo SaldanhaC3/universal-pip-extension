@@ -74,6 +74,31 @@ Após qualquer alteração no código, clique no botão de recarregar (↻) do c
 
 ---
 
+### 🤖 Peça para a sua IA instalar isso
+
+Se você usa um assistente de IA com acesso ao terminal (Claude Code, Cursor, Copilot Workspace, etc.), cole o prompt abaixo — ele clona o repositório e te guia pelos cliques que só você pode dar no navegador (carregar extensão é uma ação manual do Chrome, nenhuma IA consegue automatizar isso).
+
+```
+Instale a extensão de navegador "Universal PiP" a partir de
+https://github.com/SaldanhaC3/universal-pip-extension
+
+Siga estes passos:
+1. Clone o repositório para uma pasta apropriada (pergunte onde, se não for óbvio).
+2. Não há dependências para instalar — é uma extensão Manifest V3 pura (sem build step).
+3. Me guie, passo a passo, para carregá-la manualmente no Chrome/Brave/Edge:
+   abrir chrome://extensions, ativar o "Modo do desenvolvedor", clicar em
+   "Carregar sem compactação" e selecionar a pasta clonada. Explique que esse
+   passo precisa ser feito por mim na interface do navegador, você não
+   consegue clicar por mim.
+4. Depois de carregada, sugira fixar o ícone na barra de ferramentas e me
+   explique rapidamente como usar (passar o mouse sobre um vídeo mostra os
+   botões de Picture-in-Picture, realce e download).
+
+Não é necessária nenhuma chave de API, conta ou login.
+```
+
+---
+
 ## Como usar
 
 Passe o mouse sobre qualquer vídeo da página: três botões flutuantes aparecem no canto superior
