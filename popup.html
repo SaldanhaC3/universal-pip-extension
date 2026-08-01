@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+  <script src="popup.js" defer></script>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="icons/icon128.png" class="logo" alt="Logo">
+      <h2>Universal PiP</h2>
+    </div>
+    
+    <div class="status-box">
+      <span id="videoCount">Buscando vídeos...</span>
+    </div>
+
+    <button id="toggleBtn" class="btn">
+      Ativar PiP (Alt+P)
+    </button>
+
+    <div class="enhance-box">
+      <label class="enhance-row">
+        <span>Realçar vídeo</span>
+        <input type="checkbox" id="enhanceToggle">
+      </label>
+      <div class="enhance-row">
+        <span>Intensidade</span>
+        <input type="range" id="enhanceIntensity" min="0" max="100" value="50">
+      </div>
+      <div class="enhance-fps">
+        <span id="enhanceFps">FPS: —</span>
+      </div>
+    </div>
+
+    <div class="download-box">
+      <div class="thumbs" id="videoThumbs"></div>
+      <button id="downloadBtn" class="btn btn-download">⬇ Baixar vídeo</button>
+      <div class="download-status" id="downloadStatus">Detectando fonte…</div>
+      <div class="progress-track" id="progressTrack" hidden>
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <div class="footer-msg">
+      Atalhos: Alt+P (Windows) / MacCtrl+P (Mac)<br>
+      <span class="credit">by: SaldanhaC3, (Gabriel Saldanha)
+        <a class="credit-link" href="https://www.linkedin.com/in/luizgabrielsaldanha/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+      </span>
+    </div>
+  </div>
+</body>
+</html>

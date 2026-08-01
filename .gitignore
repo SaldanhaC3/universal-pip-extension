@@ -1,0 +1,17 @@
+# Artefatos gerados pelo Chrome ao carregar a extensão sem empacotar
+_metadata/
+
+# Listagens de diretório geradas por servidores de arquivo locais (não fazem parte da extensão)
+index.html
+icons/index.html
+utils/index.html
+
+# Pacotes gerados na hora de publicar
+*.zip
+*.crx
+*.pem
+
+# SO / editor
+.DS_Store
+Thumbs.db
+*.log
