@@ -2,6 +2,14 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [1.2.2]
+
+### Corrigido
+- Download no YouTube mais robusto: agora decifra a assinatura dos formatos (`signatureCipher`/
+  `cipher` e o parâmetro `n`) usando a função do JavaScript do player, em vez de exigir uma `url`
+  direta (que o YouTube parou de expor na maioria dos vídeos). Adicionados logs de diagnóstico
+  (`[PiP YT]`) para identificar falhas.
+
 ## [1.2.1]
 
 ### Corrigido
