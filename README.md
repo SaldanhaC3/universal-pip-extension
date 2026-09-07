@@ -7,6 +7,12 @@ via WebGL) e download do vídeo em reprodução.
 Não depende de suporte nativo do site — funciona detectando o elemento `<video>` diretamente na
 página, inclusive dentro de iframes e Shadow DOM.
 
+<p align="center">
+  <img src="screenshots/popup.png" width="250" alt="Popup da extensão Universal PiP">
+  <img src="screenshots/overlay.png" width="480" alt="Botões flutuantes sobre o vídeo">
+</p>
+<p align="center"><sub>Pré-visualização da interface (desenhada a partir do CSS real da extensão).</sub></p>
+
 ---
 
 ## Sumário
@@ -74,7 +80,7 @@ Após qualquer alteração no código, clique no botão de recarregar (↻) do c
 
 ---
 
-### 🤖 Peça para a sua IA instalar isso
+### Peça para a sua IA instalar
 
 Se você usa um assistente de IA com acesso ao terminal (Claude Code, Cursor, Copilot Workspace, etc.), cole o prompt abaixo — ele clona o repositório e te guia pelos cliques que só você pode dar no navegador (carregar extensão é uma ação manual do Chrome, nenhuma IA consegue automatizar isso).
 
@@ -153,6 +159,9 @@ um arquivo direto, o `background.js` aciona `chrome.downloads` imediatamente. Se
 `background.js` sobe um documento `offscreen` que baixa a playlist, resolve os segmentos,
 decripta (quando necessário) e concatena tudo num `Blob`, devolvendo um `objectURL` para o
 download final.
+
+Os ícones (`icons/`) e as pré-visualizações do README (`screenshots/`) são gerados por scripts
+Python reproduíveis (`generate_icons.py` e `generate_previews.py`), sem nenhuma etapa de build.
 
 ---
 

@@ -1,8 +1,3 @@
-chrome.action.onClicked.addListener((tab) => {
-  // Toggle PiP via ícone. NOTA: Com o popup definido em action, este evento pode não disparar.
-  // Será tratado principalmente pelo popup.
-});
-
 // ============================================================
 // Download de vídeo: sniffing de rede + orquestração
 // ============================================================

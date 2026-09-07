@@ -60,9 +60,6 @@ async function togglePictureInPicture(videoElement) {
       }
       
       removePiPBlocks(videoElement);
-
-      const isDRM = await detectDRMType(videoElement);
-      // Tentativa oficial independente
       await videoElement.requestPictureInPicture();
     }
   } catch (error) {
@@ -85,25 +82,27 @@ async function togglePictureInPicture(videoElement) {
   }
 }
 
-function createPiPButton(video) {
-  const container = video.parentElement;
-  if (!container) return;
-
-  // Evitar duplicar botões
-  if (container.querySelector('.universal-pip-extension-btn')) {
-    return;
+function makeContainerPositioned(container) {
+  if (window.getComputedStyle(container).position === 'static') {
+    container.style.position = 'relative';
   }
+}
+
+// Botão flutuante reaproveitado pelas três ações (PiP, realce, download),
+// em vez de triplicar a mesma lógica de posicionamento e exibição ao hover.
+function createFloatingButton(video, opts) {
+  const container = video.parentElement;
+  if (!container) return null;
+  if (container.querySelector('.' + opts.className)) return null;
 
   const button = document.createElement('button');
-  button.className = 'universal-pip-extension-btn';
-  button.innerHTML = '⧉';
-  button.title = "Ativar Picture-in-Picture";
-  
-  // Isolar CSS para evitar conflito com a página host
+  button.className = opts.className;
+  button.innerHTML = opts.glyph;
+  button.title = opts.title;
   button.style.cssText = `
     position: absolute !important;
     top: 10px !important;
-    right: 10px !important;
+    right: ${opts.rightPx}px !important;
     z-index: 2147483647 !important;
     background: rgba(0, 0, 0, 0.7) !important;
     color: white !important;
@@ -119,39 +118,35 @@ function createPiPButton(video) {
     box-sizing: border-box !important;
   `;
 
-  button.addEventListener('mouseenter', () => {
-    button.style.background = 'rgba(0, 0, 0, 0.95) !important';
-  });
-  
-  button.addEventListener('mouseleave', () => {
-    button.style.background = 'rgba(0, 0, 0, 0.7) !important';
-  });
-
-  const style = window.getComputedStyle(container);
-  if (style.position === 'static') {
-    container.style.position = 'relative';
-  }
-
+  makeContainerPositioned(container);
   container.appendChild(button);
-  
+
   container.addEventListener('mouseenter', () => {
     button.style.setProperty('display', 'block', 'important');
     button.style.setProperty('opacity', '1', 'important');
   });
-  
   container.addEventListener('mouseleave', () => {
     button.style.setProperty('opacity', '0', 'important');
     setTimeout(() => {
-      if (button.style.opacity === '0') {
-        button.style.setProperty('display', 'none', 'important');
-      }
+      if (button.style.opacity === '0') button.style.setProperty('display', 'none', 'important');
     }, 200);
   });
-  
+
   button.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    togglePictureInPicture(video);
+    opts.onClick(video, button);
+  });
+  return button;
+}
+
+function createPiPButton(video) {
+  createFloatingButton(video, {
+    className: 'universal-pip-extension-btn',
+    glyph: '⧉',
+    title: 'Ativar Picture-in-Picture',
+    rightPx: 10,
+    onClick: (v) => togglePictureInPicture(v),
   });
 }
 
@@ -304,62 +299,19 @@ function getEnhanceStatus() {
 }
 
 function createEnhanceButton(video) {
-  const container = video.parentElement;
-  if (!container) return;
-  if (container.querySelector('.universal-pip-enhance-btn')) return;
-
-  const button = document.createElement('button');
-  button.className = 'universal-pip-enhance-btn';
-  button.innerHTML = '✦';
-  button.title = 'Ativar realce de vídeo';
-
-  button.style.cssText = `
-    position: absolute !important;
-    top: 10px !important;
-    right: 52px !important;
-    z-index: 2147483647 !important;
-    background: rgba(0, 0, 0, 0.7) !important;
-    color: white !important;
-    border: 1px solid rgba(255,255,255,0.2) !important;
-    border-radius: 4px !important;
-    padding: 6px 10px !important;
-    cursor: pointer !important;
-    display: none !important;
-    font-size: 16px !important;
-    backdrop-filter: blur(4px) !important;
-    transition: opacity 0.2s, background 0.2s !important;
-    line-height: 1 !important;
-    box-sizing: border-box !important;
-  `;
-
-  const style = window.getComputedStyle(container);
-  if (style.position === 'static') {
-    container.style.position = 'relative';
-  }
-  container.appendChild(button);
-
-  container.addEventListener('mouseenter', () => {
-    button.style.setProperty('display', 'block', 'important');
-    button.style.setProperty('opacity', '1', 'important');
-  });
-  container.addEventListener('mouseleave', () => {
-    button.style.setProperty('opacity', '0', 'important');
-    setTimeout(() => {
-      if (button.style.opacity === '0') {
-        button.style.setProperty('display', 'none', 'important');
-      }
-    }, 200);
-  });
-
-  button.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const { enabled } = toggleEnhance(video);
-    button.style.setProperty('background',
-      enabled ? 'rgba(59, 130, 246, 0.9)' : 'rgba(0, 0, 0, 0.7)', 'important');
-    button.style.setProperty('border-color',
-      enabled ? 'rgba(96, 165, 250, 0.9)' : 'rgba(255,255,255,0.2)', 'important');
-    button.title = enabled ? 'Desativar realce de vídeo' : 'Ativar realce de vídeo';
+  createFloatingButton(video, {
+    className: 'universal-pip-enhance-btn',
+    glyph: '✦',
+    title: 'Ativar realce de vídeo',
+    rightPx: 52,
+    onClick: (v, btn) => {
+      const { enabled } = toggleEnhance(v);
+      btn.style.setProperty('background',
+        enabled ? 'rgba(59, 130, 246, 0.9)' : 'rgba(0, 0, 0, 0.7)', 'important');
+      btn.style.setProperty('border-color',
+        enabled ? 'rgba(96, 165, 250, 0.9)' : 'rgba(255,255,255,0.2)', 'important');
+      btn.title = enabled ? 'Desativar realce de vídeo' : 'Ativar realce de vídeo';
+    },
   });
 }
 
@@ -444,57 +396,12 @@ function startDownloadForVideo(video) {
 }
 
 function createDownloadButton(video) {
-  const container = video.parentElement;
-  if (!container) return;
-  if (container.querySelector('.universal-pip-download-btn')) return;
-
-  const button = document.createElement('button');
-  button.className = 'universal-pip-download-btn';
-  button.innerHTML = '⬇';
-  button.title = 'Baixar vídeo';
-
-  button.style.cssText = `
-    position: absolute !important;
-    top: 10px !important;
-    right: 94px !important;
-    z-index: 2147483647 !important;
-    background: rgba(16, 185, 129, 0.85) !important;
-    color: white !important;
-    border: 1px solid rgba(52, 211, 153, 0.9) !important;
-    border-radius: 4px !important;
-    padding: 6px 10px !important;
-    cursor: pointer !important;
-    display: none !important;
-    font-size: 16px !important;
-    backdrop-filter: blur(4px) !important;
-    transition: opacity 0.2s, background 0.2s !important;
-    line-height: 1 !important;
-    box-sizing: border-box !important;
-  `;
-
-  const style = window.getComputedStyle(container);
-  if (style.position === 'static') {
-    container.style.position = 'relative';
-  }
-  container.appendChild(button);
-
-  container.addEventListener('mouseenter', () => {
-    button.style.setProperty('display', 'block', 'important');
-    button.style.setProperty('opacity', '1', 'important');
-  });
-  container.addEventListener('mouseleave', () => {
-    button.style.setProperty('opacity', '0', 'important');
-    setTimeout(() => {
-      if (button.style.opacity === '0') {
-        button.style.setProperty('display', 'none', 'important');
-      }
-    }, 200);
-  });
-
-  button.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    startDownloadForVideo(video); // fonte amarrada a ESTE vídeo
+  createFloatingButton(video, {
+    className: 'universal-pip-download-btn',
+    glyph: '⬇',
+    title: 'Baixar vídeo',
+    rightPx: 94,
+    onClick: (v) => startDownloadForVideo(v), // fonte amarrada a ESTE vídeo
   });
 }
 

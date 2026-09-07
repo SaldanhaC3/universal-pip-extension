@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Universal Picture-in-Picture",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "PiP universal, realce de vídeo em tempo real (WebGL) e download de vídeos em qualquer site",
   "permissions": [
     "activeTab",

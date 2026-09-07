@@ -2,6 +2,17 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [1.2.0]
+
+### Melhorado
+- Código mais enxuto: os três botões flutuantes (PiP, realce, download) agora são criados por
+  uma única função `createFloatingButton`, eliminando a triplicação de lógica de posicionamento
+  e exibição ao passar o mouse.
+- Removido código morto: listener `action.onClicked` sem efeito (o popup já está definido) e uma
+  chamada redundante de detecção de DRM antes de ativar o PiP.
+- Ícone redesenhado em vetor (gradiente azul + glifo de Picture-in-Picture), com script
+  `icons/generate_icons.py` para regenerar os PNGs em qualquer tamanho.
+
 ## [1.1.0]
 
 ### Adicionado
