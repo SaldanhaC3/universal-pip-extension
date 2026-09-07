@@ -62,6 +62,10 @@ progressivo. Suporta dois caminhos:
 O popup mostra miniaturas de todos os vídeos detectados na página para você escolher qual baixar,
 e um botão flutuante (⬇) aparece diretamente sobre cada vídeo.
 
+- **YouTube:** o player usa DASH via MSE, então o `<video>` só expõe um `blob:`. A extensão lê o
+  `ytInitialPlayerResponse` da página e extrai as **URLs progressivas** (áudio+vídeo combinados) do
+  player, que baixam como arquivo único. As qualidades progressivas costumam ir até ~720p.
+
 ---
 
 ## Instalação
@@ -169,8 +173,10 @@ Python reproduíveis (`generate_icons.py` e `generate_previews.py`), sem nenhuma
 
 - **DRM (Widevine/SAMPLE-AES):** detectado e recusado com aviso claro — não há como decriptar
   conteúdo protegido por hardware DRM.
-- **DASH (`.mpd`):** ainda não suportado (comum no feed principal do Facebook/Instagram, entre
-  outros). É detectado e reportado como "formato não suportado" em vez de falhar silenciosamente.
+- **DASH (`.mpd`) puro:** ainda não suportado (comum no feed principal do Facebook/Instagram, entre
+  outros), e no YouTube as faixas acima de ~720p também são DASH separado (áudio/vídeo à parte). Nesses
+  casos a extensão baixa a melhor qualidade progressiva disponível (áudio+vídeo num só arquivo) ou
+  reporta "formato não suportado" em vez de falhar silenciosamente.
 - **Saída do HLS é `.ts`, não `.mp4`:** o arquivo é uma cópia fiel dos segmentos, reproduzível em
   VLC e na maioria dos players, mas sem remuxagem para `.mp4` (isso exigiria embutir um
   transcoder como `ffmpeg.wasm`, avaliado para uma fase futura).

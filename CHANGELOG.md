@@ -2,6 +2,14 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [1.2.1]
+
+### Corrigido
+- Download no YouTube: o player usa DASH via MSE e o `<video>` só expõe um `blob:`, o que
+  antes não baixava nada útil. Agora um script em `world: MAIN` lê `ytInitialPlayerResponse`
+  e extrai as URLs progressivas (áudio+vídeo combinados) do player, que são baixadas como
+  arquivo único. Suporta as qualidades progressivas disponíveis (tipicamente até ~720p).
+
 ## [1.2.0]
 
 ### Melhorado

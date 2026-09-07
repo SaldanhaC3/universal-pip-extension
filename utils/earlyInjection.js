@@ -48,7 +48,20 @@ try {
     childList: true,
     subtree: true
   });
-  
+
+  // Repassar formatos do YouTube (vindos do mundo principal) para o background,
+  // que os usa para baixar o vídeo como arquivo único.
+  window.addEventListener('message', (e) => {
+    if (!e.data || !e.data.__pipYtFormats) return;
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+      chrome.runtime.sendMessage({
+        type: 'YT_FORMATS',
+        videoId: e.data.videoId,
+        formats: e.data.__pipYtFormats,
+      }).catch(() => {});
+    }
+  });
+
   // Como estamos em document_start, head/body podem ainda não existir completamente,
   // O MutationObserver garante que pegamos assim que a tag é injetada.
 } catch (err) {

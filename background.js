@@ -49,6 +49,7 @@ chrome.webRequest.onBeforeRequest.addListener(
     if (details.tabId < 0) return;
     if (details.type === 'main_frame') {
       chrome.storage.session.remove(KEY(details.tabId)).catch(() => {}); // navegação → zera
+      chrome.storage.session.remove(YT_KEY(details.tabId)).catch(() => {});
       return;
     }
     const kind = classifyUrl(details.url);
@@ -73,12 +74,38 @@ chrome.webRequest.onHeadersReceived.addListener(
 );
 
 // Limpar candidatos ao fechar a aba.
-chrome.tabs.onRemoved.addListener((tabId) => chrome.storage.session.remove(KEY(tabId)).catch(() => {}));
+chrome.tabs.onRemoved.addListener((tabId) => {
+  chrome.storage.session.remove(KEY(tabId)).catch(() => {});
+  chrome.storage.session.remove(YT_KEY(tabId)).catch(() => {});
+});
 
 async function candidatesForTab(tabId) {
   const bucket = await readBucket(tabId);
   const recent = (list) => (list || []).slice().sort((a, b) => b.ts - a.ts).map((x) => x.url);
   return { hls: recent(bucket.hls), direct: recent(bucket.direct), dash: recent(bucket.dash) };
+}
+
+// ---- YouTube: formatos progressivos (áudio+vídeo) extraídos do player ----
+const YT_KEY = (tabId) => `yt_${tabId}`;
+
+async function readYtFormats(tabId) {
+  try {
+    const data = await chrome.storage.session.get(YT_KEY(tabId));
+    return data[YT_KEY(tabId)] || null;
+  } catch (e) { return null; }
+}
+
+async function setYtFormats(tabId, formats) {
+  try { await chrome.storage.session.set({ [YT_KEY(tabId)]: formats }); } catch (e) { /* noop */ }
+}
+
+function ytQuality(f) {
+  const m = /(\d+)p/i.exec(f.qualityLabel || '');
+  return m ? parseInt(m[1], 10) : 0;
+}
+
+function pickBestYt(formats) {
+  return formats.slice().sort((a, b) => ytQuality(b) - ytQuality(a))[0] || null;
 }
 
 // ---- Offscreen (motor HLS) ----
@@ -126,7 +153,8 @@ async function startDirectDownload(url, tabId) {
   try {
     const clean = sanitizeDirectUrl(url);
     console.log('[PiP DL] baixando direto:', clean);
-    await chrome.downloads.download({ url: clean, filename: suggestFilename(tabId, 'mp4') });
+    const ext = /\.webm(\?|$)/i.test(clean) ? 'webm' : 'mp4';
+    await chrome.downloads.download({ url: clean, filename: suggestFilename(tabId, ext) });
     broadcastProgress({ tabId, state: 'done' });
     return { ok: true };
   } catch (e) {
@@ -194,6 +222,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true; // resposta assíncrona (storage.session)
   }
 
+  if (msg.type === 'YT_FORMATS') {
+    const tabId = msg.tabId || (sender.tab && sender.tab.id);
+    if (tabId) setYtFormats(tabId, msg.formats || []);
+    return;
+  }
+
   if (msg.type === 'START_DOWNLOAD') {
     const tabId = msg.tabId || (sender.tab && sender.tab.id);
     (async () => {
@@ -203,6 +237,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           console.log('[PiP DL] download direto (currentSrc):', msg.url);
           sendResponse(await startDirectDownload(msg.url, tabId));
           return;
+        }
+        // 1b) YouTube: usar as URLs progressivas (áudio+vídeo) extraídas do player,
+        // que baixam como arquivo único. O <video> só expõe um blob via MSE, então os
+        // candidatos farejados na rede são fragmentos DASH e não servem sozinhos.
+        const ytFormats = await readYtFormats(tabId);
+        if (ytFormats && ytFormats.length) {
+          const best = pickBestYt(ytFormats);
+          if (best) {
+            console.log('[PiP DL] YouTube progressivo:', best.qualityLabel || best.itag);
+            sendResponse(await startDirectDownload(best.url, tabId));
+            return;
+          }
         }
         // 2) Senão, usar candidatos farejados persistidos.
         const cands = await candidatesForTab(tabId);
