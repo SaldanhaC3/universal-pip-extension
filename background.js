@@ -108,6 +108,14 @@ function pickBestYt(formats) {
   return formats.slice().sort((a, b) => ytQuality(b) - ytQuality(a))[0] || null;
 }
 
+function ytExt(mimeType) {
+  const m = (mimeType || '').toLowerCase();
+  if (m.includes('webm')) return 'webm';
+  if (m.includes('matroska')) return 'mkv';
+  if (m.includes('mp4') || m.includes('mpeg')) return 'mp4';
+  return 'mp4';
+}
+
 // ---- Offscreen (motor HLS) ----
 let creatingOffscreen = null;
 async function ensureOffscreen() {
@@ -149,12 +157,42 @@ function broadcastProgress(payload) {
   chrome.runtime.sendMessage({ type: 'DOWNLOAD_PROGRESS', ...payload }).catch(() => {});
 }
 
-async function startDirectDownload(url, tabId) {
+async function startDirectDownload(url, tabId, ext) {
   try {
     const clean = sanitizeDirectUrl(url);
     console.log('[PiP DL] baixando direto:', clean);
-    const ext = /\.webm(\?|$)/i.test(clean) ? 'webm' : 'mp4';
-    await chrome.downloads.download({ url: clean, filename: suggestFilename(tabId, ext) });
+    if (!ext) ext = /\.webm(\?|$)/i.test(clean) ? 'webm' : 'mp4';
+    await new Promise((resolve, reject) => {
+      chrome.downloads.download(
+        { url: clean, filename: suggestFilename(tabId, ext), conflictAction: 'uniquify' },
+        (downloadId) => {
+          if (chrome.runtime.lastError || downloadId === undefined) {
+            reject(new Error(chrome.runtime.lastError?.message || 'download falhou'));
+            return;
+          }
+          const onChanged = (delta) => {
+            if (delta.id !== downloadId) return;
+            if (delta.state && delta.state.current === 'complete') {
+              chrome.downloads.onChanged.removeListener(onChanged);
+              chrome.downloads.search({ id: downloadId }, ([item]) => {
+                const size = item && item.fileSize;
+                if (size !== undefined && size < 50000) {
+                  // Arquivo minúsculo quase sempre é uma página de erro do YouTube
+                  // (ex.: decifragem de assinatura incorreta devolvendo texto).
+                  console.warn('[PiP DL] arquivo muito pequeno (' + size +
+                    ' bytes): provável página de erro do YouTube — a assinatura decifrada pode estar incorreta.');
+                }
+              });
+              resolve();
+            } else if (delta.state && delta.state.current === 'interrupted') {
+              chrome.downloads.onChanged.removeListener(onChanged);
+              reject(new Error('download interrompido'));
+            }
+          };
+          chrome.downloads.onChanged.addListener(onChanged);
+        }
+      );
+    });
     broadcastProgress({ tabId, state: 'done' });
     return { ok: true };
   } catch (e) {
@@ -245,8 +283,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         if (ytFormats && ytFormats.length) {
           const best = pickBestYt(ytFormats);
           if (best) {
-            console.log('[PiP DL] YouTube progressivo:', best.qualityLabel || best.itag);
-            sendResponse(await startDirectDownload(best.url, tabId));
+            console.log('[PiP DL] YouTube progressivo:', best.qualityLabel || best.itag, best.mimeType || '');
+            sendResponse(await startDirectDownload(best.url, tabId, ytExt(best.mimeType)));
             return;
           }
         }

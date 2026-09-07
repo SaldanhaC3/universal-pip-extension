@@ -2,6 +2,14 @@
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [1.2.3]
+
+### Corrigido
+- Nomeia o arquivo baixado com a extensão correta conforme o `mimeType` do formato do YouTube
+  (`.mp4`/`.webm`/`.mkv`) em vez de adivinhar pela URL.
+- Adiciona aviso quando o arquivo baixado é suspeitosamente pequeno (provável página de erro do
+  YouTube, indicando decifragem de assinatura incorreta).
+
 ## [1.2.2]
 
 ### Corrigido
